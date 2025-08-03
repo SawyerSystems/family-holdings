@@ -1,0 +1,10 @@
+{
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportMissingImports": "warning",
+        "reportMissingModuleSource": "warning"
+    },
+    "python.analysis.typeCheckingMode": "basic",
+    "python.analysis.extraPaths": [
+        "${workspaceFolder}/backend/venv/lib/python3.12/site-packages"
+    ]
+}
