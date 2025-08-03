@@ -1,0 +1,7 @@
+{
+  "extraPaths": [
+    "/workspaces/family-holdings/backend/venv/lib/python3.12/site-packages"
+  ],
+  "useLibraryCodeForTypes": true,
+  "reportMissingImports": "warning"
+}
