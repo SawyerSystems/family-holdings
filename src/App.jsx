@@ -7,6 +7,7 @@ import ContributionsPage from '@/pages/ContributionsPage'
 import LoansPage from '@/pages/LoansPage'
 import FamilyOverviewPage from '@/pages/FamilyOverviewPage'
 import SettingsPage from '@/pages/SettingsPage'
+import DiagnosticComponent from '@/components/DiagnosticComponent'
 import { Toaster } from '@/components/ui/toaster'
 import './App.css'
 
@@ -17,6 +18,7 @@ function App() {
         <Routes>
           {/* Public routes */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/diagnostics" element={<DiagnosticComponent />} />
           
           {/* Protected routes */}
           <Route path="/" element={
