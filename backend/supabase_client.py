@@ -11,19 +11,8 @@ load_dotenv(dotenv_path)
 supabase_url = os.getenv("SUPABASE_URL")
 supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
-print(f"Supabase URL: {supabase_url}")
-print(f"Supabase Key exists: {'Yes' if supabase_key else 'No'}")
-
 if not supabase_url or not supabase_key:
-    print("Supabase credentials not found in environment variables!")
-    print(f"Current working directory: {os.getcwd()}")
-    print(f"Env file path being checked: {dotenv_path}")
-    print(f"Env file exists: {os.path.exists(dotenv_path)}")
-    
-    # Use hardcoded values as fallback (same as in .env)
-    supabase_url = "https://btyhalqffkgjvsvkentn.supabase.co"
-    supabase_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0eWhhbHFmZmtnanZzdmtlbnRuIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NDIwNDY1NCwiZXhwIjoyMDY5NzgwNjU0fQ.j-IgpKgHHMF0rK7_sOSWOyHv43TzPZTyQOCp4xR6CC0"
-    print("Using hardcoded fallback values instead")
+    raise RuntimeError("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY. Set them in your environment (.env).")
 
 # Initialize Supabase client
 try:

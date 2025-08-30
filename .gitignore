@@ -1,0 +1,16 @@
+.env
+venv/
+node_modules/
+dist/
+build/
+.vite/
+.turbo/
+coverage/
+htmlcov/
+__pycache__/
+*.pyc
+*.log
+*.sqlite
+*.DS_Store
+supabase/.branches
+supabase/.temp

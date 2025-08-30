@@ -44,13 +44,13 @@ async def test_db_connection():
         return {"status": "error", "message": result["message"]}
     return {"status": "ok", "message": result["message"], "data": result.get("data")}
 
-# User endpoints will go here
+from routers import users as users_router
+from routers import contributions as contributions_router
 
-# Contribution endpoints will go here
+app.include_router(users_router.router)
+app.include_router(contributions_router.router)
 
-# Loan endpoints will go here
-
-# Admin endpoints will go here
+# Placeholder: loans & stats routers to follow
 
 if __name__ == "__main__":
     # Run the server on port 8000
