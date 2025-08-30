@@ -53,3 +53,15 @@ class StatsMeOut(BaseModel):
     deficiency: Decimal
     current_loan_balance: Optional[Decimal]
     borrowing_limit: Optional[Decimal]
+
+class LoanRequest(BaseModel):
+    amount: Decimal = Field(..., gt=0)
+    duration_weeks: int = Field(..., gt=0)
+    reason: str | None = None
+
+class LoanActionResponse(BaseModel):
+    id: str
+    status: str
+    amount: Decimal
+    remaining_balance: Decimal | None = None
+    weekly_payment: Decimal | None = None

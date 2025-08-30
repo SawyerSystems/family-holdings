@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useView } from '@/hooks/use-view'
 import { useAuth } from '@/hooks/use-auth'
-import { User, Contribution } from '@/api/entities'
+import { User, Contribution, Stats } from '@/api/entities'
 import { format } from 'date-fns'
 import { DollarSign, ArrowUp, ArrowDown, Users } from 'lucide-react'
 import { useToast } from '@/components/ui/toaster'
@@ -41,9 +41,13 @@ export default function Dashboard() {
   useEffect(() => {
     async function loadDashboardData() {
       try {
-        // Load user data
-        const userData = await User.me()
-        setUserData(userData)
+  // Load core user profile
+  const userData = await User.me()
+  setUserData(userData)
+
+  // Load stats (expected/deficiency etc.)
+  const stats = await Stats.me()
+  setUserData(prev => ({ ...prev, stats }))
 
         // Load contributions
         const contributions = isAdminView 
@@ -97,6 +101,8 @@ export default function Dashboard() {
   const borrowingLimit = userData?.borrowing_limit
     ? `$${userData.borrowing_limit.toLocaleString()}`
     : '$0'
+  const deficiency = userData?.stats?.deficiency ? `$${Number(userData.stats.deficiency).toLocaleString()}` : '$0'
+  const expected = userData?.stats?.expected_total ? `$${Number(userData.stats.expected_total).toLocaleString()}` : '$0'
 
   return (
     <div>
@@ -129,6 +135,16 @@ export default function Dashboard() {
           title="Borrowing Limit" 
           value={borrowingLimit}
           icon={Users}
+        />
+        <StatsCard 
+          title="Expected (Total)" 
+          value={expected}
+          icon={DollarSign}
+        />
+        <StatsCard 
+          title="Deficiency" 
+          value={deficiency}
+          icon={DollarSign}
         />
       </div>
       

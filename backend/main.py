@@ -47,10 +47,12 @@ async def test_db_connection():
 from routers import users as users_router
 from routers import contributions as contributions_router
 from routers import stats as stats_router
+from routers import loans as loans_router
 
 app.include_router(users_router.router)
 app.include_router(contributions_router.router)
 app.include_router(stats_router.router)
+app.include_router(loans_router.router)
 
 # Placeholder: loans & stats routers to follow
 
