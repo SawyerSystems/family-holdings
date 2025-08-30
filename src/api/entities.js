@@ -94,3 +94,12 @@ export class Loan {
     return apiClient.post(`/loans/${id}/payment`, { amount })
   }
 }
+
+/**
+ * Stats entity
+ */
+export class Stats {
+  static async me() {
+    return apiClient.get('/stats/me')
+  }
+}
