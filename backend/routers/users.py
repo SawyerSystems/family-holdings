@@ -53,6 +53,20 @@ def get_me(user: UserContext = Depends(get_current_user)):
     profile['email'] = user.email
     return profile
 
+@router.post("/signout")
+def signout():
+    """Sign out the current user"""
+    # In a real JWT-based system, you would:
+    # 1. Add the token to a blacklist/revocation list
+    # 2. Or have the client discard the token
+    # 
+    # For now, since we're using mock auth, we just return success
+    # The frontend should clear any stored user data/tokens
+    return {
+        "success": True,
+        "message": "Successfully signed out"
+    }
+
 @router.get("", dependencies=[Depends(require_admin)])
 def list_users():
     res = supabase_client.supabase.table('profiles').select('*').execute()

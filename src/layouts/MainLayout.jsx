@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, Navigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -19,9 +19,21 @@ import {
 
 const MainLayout = ({ children }) => {
   const location = useLocation();
-  const { user, signOut } = useAuth();
+  const { user, signOut, loading } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [viewAs, setViewAs] = useState('user');
+  
+  // Show loading while auth is initializing
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center">
+      <div className="text-lg">Loading...</div>
+    </div>;
+  }
+  
+  // Redirect to login if not authenticated
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
   
   const isAdmin = user?.role === 'admin';
   const isAdminView = isAdmin && viewAs === 'admin';

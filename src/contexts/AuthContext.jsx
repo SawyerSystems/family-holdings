@@ -11,6 +11,7 @@ export const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [hasSignedOut, setHasSignedOut] = useState(false);
   
   // For development mode, sign in automatically
   const isDevelopment = import.meta.env.DEV;
@@ -21,8 +22,17 @@ export const AuthProvider = ({ children }) => {
       try {
         setLoading(true);
         
+        // Check if user has explicitly signed out
+        const signedOut = localStorage.getItem('auth.signedOut');
+        if (signedOut === 'true') {
+          setHasSignedOut(true);
+          setUser(null);
+          setLoading(false);
+          return;
+        }
+        
         if (isDevelopment) {
-          // In development, set a mock user
+          // In development, set a mock user only if not signed out
           const mockUser = {
             id: 'dev-user-123',
             email: 'dev@example.com',
@@ -53,11 +63,9 @@ export const AuthProvider = ({ children }) => {
         setLoading(false);
       }
     };
-    
+
     initAuth();
-  }, [isDevelopment]);
-  
-  // Sign in function - this would use Supabase auth in production
+  }, [isDevelopment]);  // Sign in function - this would use Supabase auth in production
   const signIn = async ({ email, password }) => {
     try {
       setLoading(true);
@@ -74,6 +82,8 @@ export const AuthProvider = ({ children }) => {
         
         setUser(mockUser);
         localStorage.setItem('auth.user', JSON.stringify(mockUser));
+        localStorage.removeItem('auth.signedOut'); // Clear signed out flag
+        setHasSignedOut(false);
         return { success: true, user: mockUser };
       } else {
         // In production:
@@ -111,9 +121,33 @@ export const AuthProvider = ({ children }) => {
   // Sign out function
   const signOut = async () => {
     try {
-      // In production: await supabase.auth.signOut();
+      // Call the backend signout endpoint
+      try {
+        const response = await fetch('/api/users/signout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Mock-User-ID': user?.id || 'user-123',
+            'X-Mock-User-Email': user?.email || 'demo@example.com',
+            'X-Mock-User-Role': user?.role || 'member'
+          }
+        });
+        if (!response.ok) {
+          console.warn('Backend signout failed, continuing with local signout');
+        }
+      } catch (apiError) {
+        console.warn('Could not reach backend for signout:', apiError.message);
+      }
+      
+      // Clear local storage and state
       localStorage.removeItem('auth.user');
+      localStorage.setItem('auth.signedOut', 'true'); // Mark as explicitly signed out
       setUser(null);
+      setHasSignedOut(true);
+      
+      // Force a page reload to clear any cached data and redirect to login
+      window.location.href = '/login';
+      
       return { success: true };
     } catch (error) {
       console.error('Sign out error:', error);
