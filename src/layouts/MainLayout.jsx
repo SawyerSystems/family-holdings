@@ -129,16 +129,6 @@ const MainLayout = ({ children }) => {
                 );
               })}
               
-              {isAdmin && (
-                <button
-                  onClick={toggleView}
-                  className="flex items-center w-full px-3 py-2 text-white/70 rounded-lg hover:bg-primary-700/50 hover:text-white"
-                >
-                  <Eye size={20} className="mr-3" />
-                  View as: {viewAs === 'admin' ? 'Admin' : 'User'}
-                </button>
-              )}
-              
               <button
                 onClick={signOut}
                 className="flex items-center w-full px-3 py-2 mt-4 text-white/70 rounded-lg hover:bg-primary-700/50 hover:text-white"
@@ -174,19 +164,6 @@ const MainLayout = ({ children }) => {
                   </Link>
                 );
               })}
-              
-              {isAdmin && (
-                <button
-                  onClick={() => {
-                    toggleView();
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="flex items-center w-full px-3 py-2 text-white/70 rounded-lg hover:bg-primary-700/50 hover:text-white"
-                >
-                  <Eye size={20} className="mr-3" />
-                  View as: {viewAs === 'admin' ? 'Admin' : 'User'}
-                </button>
-              )}
               
               <button
                 onClick={signOut}
