@@ -59,6 +59,8 @@ const UserSwitcher = () => {
     }
     
     try {
+  // Persist selected user id immediately so AuthContext init can pick it up
+  localStorage.setItem('user-switcher.selectedUserId', selectedUser.id);
       await switchUser(selectedUser);
       setIsOpen(false);
       

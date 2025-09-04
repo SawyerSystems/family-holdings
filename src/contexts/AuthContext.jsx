@@ -38,30 +38,40 @@ export const AuthProvider = ({ children }) => {
         }
         
         if (isDevelopment) {
+          // If a previously switched/stored user exists, reuse it to avoid reverting
+          const storedUserRaw = localStorage.getItem('auth.user');
+          if (storedUserRaw) {
+            try {
+              const storedUser = JSON.parse(storedUserRaw);
+              if (storedUser?.id) {
+                setUser(storedUser);
+                return; // Exit early since we restored user
+              }
+            } catch (e) {
+              console.warn('Failed to parse stored dev user, falling back to default');
+            }
+          }
+
           let mockUser;
-          
-          // Check if there's a selected user from user switcher
           const selectedUserId = localStorage.getItem('user-switcher.selectedUserId');
           if (selectedUserId) {
-            // Use the selected user from the switcher
+            // Construct a generic switched user placeholder; real role resolved by backend headers
             mockUser = {
               id: selectedUserId,
-              email: 'switched-user@familyholdings.local',
+              email: `${selectedUserId}@familyholdings.local`,
               name: 'Switched User',
-              role: 'admin', // Will be determined by the backend based on the actual user
+              role: 'admin',
               avatar: 'https://ui-avatars.com/api/?name=Switched+User&background=6d28d9&color=fff',
             };
           } else {
-            // Default to Family Admin (the first user in our database)
             mockUser = {
-              id: '5e98e9eb-375b-49f6-82bc-904df30c4021', // Family Admin UUID from our test data
+              id: '5e98e9eb-375b-49f6-82bc-904df30c4021',
               email: 'admin@familyholdings.local',
               name: 'Family Admin',
               role: 'admin',
               avatar: 'https://ui-avatars.com/api/?name=Family+Admin&background=dc2626&color=fff',
             };
           }
-          
           setUser(mockUser);
           localStorage.setItem('auth.user', JSON.stringify(mockUser));
         } else {
@@ -190,9 +200,10 @@ export const AuthProvider = ({ children }) => {
         role: newUser.role,
         avatar: newUser.avatar,
       };
-      
+
       setUser(mockUser);
       localStorage.setItem('auth.user', JSON.stringify(mockUser));
+      localStorage.setItem('user-switcher.selectedUserId', newUser.id);
       localStorage.removeItem('auth.signedOut'); // Clear signed out flag
       setHasSignedOut(false);
       
