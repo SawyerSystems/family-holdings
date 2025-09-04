@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
-from ..dependencies import get_current_user, require_admin, UserContext
-from .. import supabase_client
-from ..models import LoanRequest, LoanActionResponse
+from dependencies import get_current_user, require_admin, UserContext
+import supabase_client
+from models import LoanRequest, LoanActionResponse
 
 router = APIRouter(prefix="/loans", tags=["loans"])
 

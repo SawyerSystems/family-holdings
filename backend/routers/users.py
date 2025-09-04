@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
-from ..dependencies import get_current_user, require_admin, UserContext
-from .. import supabase_client
-from ..models import UserCreate, UserOut, UserUpdate
+from dependencies import get_current_user, require_admin, UserContext
+import supabase_client
+from models import UserCreate, UserOut, UserUpdate
 from datetime import datetime
 
 router = APIRouter(prefix="/users", tags=["users"])

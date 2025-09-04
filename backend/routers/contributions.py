@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
-from ..dependencies import get_current_user, require_admin, UserContext
-from .. import supabase_client
-from ..models import ContributionCreate, ContributionOut, ContributionMarkPaid
+from dependencies import get_current_user, require_admin, UserContext
+import supabase_client
+from models import ContributionCreate, ContributionOut, ContributionMarkPaid
 from datetime import datetime
 
 router = APIRouter(prefix="/contributions", tags=["contributions"])

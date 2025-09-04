@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from datetime import datetime, timezone
 from decimal import Decimal
-from ..dependencies import get_current_user, UserContext
-from .. import supabase_client
-from ..models import StatsMeOut
+from dependencies import get_current_user, UserContext
+import supabase_client
+from models import StatsMeOut
 
 router = APIRouter(prefix="/stats", tags=["stats"])
 

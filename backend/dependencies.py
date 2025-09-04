@@ -12,8 +12,8 @@ class UserContext:
 def get_current_user(x_user_id: str | None = Header(default=None), x_user_role: str | None = Header(default=None)) -> UserContext:
     """Phase 1 mock auth or header-injected context."""
     if MOCK_MODE:
-        # Default admin for rapid development
-        return UserContext(id=x_user_id or "dev-admin", role=x_user_role or "admin")
+        # Default admin for rapid development (using real UUID from sample data)
+        return UserContext(id=x_user_id or "5e98e9eb-375b-49f6-82bc-904df30c4021", role=x_user_role or "admin")
     # Future: validate JWT here
     if not x_user_id:
         raise HTTPException(status_code=401, detail="Unauthorized")

@@ -20,6 +20,13 @@ class ApiClient {
       headers['Authorization'] = `Bearer ${this.token}`
     }
 
+    // Mock auth for development (Phase 1)
+    if (import.meta.env.DEV) {
+      // Use Family Admin ID for now - you can make this configurable later
+      headers['x-user-id'] = '5e98e9eb-375b-49f6-82bc-904df30c4021'
+      headers['x-user-role'] = 'admin'
+    }
+
     return headers
   }
 

@@ -14,7 +14,7 @@
 - Frontend: React (Vite), Tailwind, componentized pages hitting REST API.
 - Backend: FastAPI service acting as an abstraction layer over Supabase (Postgres + Auth). Service role key ONLY on backend.
 - Database: Supabase (auth + tables with RLS once real auth integrated).
-- Mobile: Capacitor shell using the built web UI & native wrappers.
+- Mobile: Capacitor- shell using the built web UI & native wrappers.
 - Auth Phasing:
   - Phase 1: Mock user injection (dev)
   - Phase 2: Real Supabase auth (frontend) + JWT verification (backend) + RLS
