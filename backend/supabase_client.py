@@ -3,9 +3,15 @@ from dotenv import load_dotenv
 from supabase import create_client, Client
 from fastapi import HTTPException
 
-# Load environment variables from the parent .env file
-dotenv_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
-load_dotenv(dotenv_path)
+# Load environment variables - try both backend/.env and parent .env
+backend_env = os.path.join(os.path.dirname(__file__), '.env')
+parent_env = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+
+# Load backend .env first (if it exists), then parent .env
+if os.path.exists(backend_env):
+    load_dotenv(backend_env)
+if os.path.exists(parent_env):
+    load_dotenv(parent_env, override=False)  # Don't override values from backend .env
 
 # Get Supabase credentials from environment variables
 supabase_url = os.getenv("SUPABASE_URL")

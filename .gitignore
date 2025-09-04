@@ -1,4 +1,19 @@
+# Environment files - NEVER commit these!
 .env
+.env.*
+!.env.example
+
+# Backend secrets and data files
+backend/create_real_sample_data.py
+backend/create_users_with_auth.py
+*_real_*.py
+*_real_*.sql
+
+# CI/CD with secrets
+.github/workflows/ci.yml
+.github/workflows/*
+!.github/workflows/ci-template.yml
+
 venv/
 node_modules/
 dist/
