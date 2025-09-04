@@ -3,8 +3,32 @@ from dependencies import get_current_user, require_admin, UserContext
 import supabase_client
 from models import UserCreate, UserOut, UserUpdate
 from datetime import datetime
+from decimal import Decimal
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+def _calculate_user_borrowing_limit(user_id: str) -> Decimal:
+    """Calculate borrowing limit as 75% of user's total paid contributions"""
+    # Get user's total paid contributions
+    contrib_res = supabase_client.supabase.table('contributions').select('amount').eq('user_id', user_id).eq('status', 'paid').execute()
+    
+    total_contributed = Decimal('0.00')
+    if contrib_res.data:
+        total_contributed = sum(Decimal(str(contrib.get('amount', 0))) for contrib in contrib_res.data)
+    
+    # Calculate 75% of total contributions with proper rounding
+    borrowing_limit = (total_contributed * Decimal('0.75')).quantize(Decimal('0.01'))
+    
+    return borrowing_limit
+
+def _get_user_current_loan_balance(user_id: str) -> Decimal:
+    """Get user's current outstanding loan balance"""
+    res = supabase_client.supabase.table('loans').select('remaining_balance').eq('user_id', user_id).eq('status', 'approved').execute()
+    if not res.data:
+        return Decimal('0.00')
+    
+    total_balance = sum((Decimal(str(loan.get('remaining_balance', 0))) for loan in res.data), Decimal('0.00'))
+    return total_balance
 
 @router.get("/me", response_model=UserOut)
 def get_me(user: UserContext = Depends(get_current_user)):
@@ -18,6 +42,14 @@ def get_me(user: UserContext = Depends(get_current_user)):
         'borrowing_limit': 0,
         'current_loan_balance': 0,
     }
+    
+    # Calculate real-time borrowing limit and current loan balance instead of using stored values
+    calculated_borrowing_limit = _calculate_user_borrowing_limit(user.id)
+    calculated_loan_balance = _get_user_current_loan_balance(user.id)
+    
+    # Override stored values with calculated ones
+    profile['borrowing_limit'] = str(calculated_borrowing_limit)
+    profile['current_loan_balance'] = str(calculated_loan_balance)
     profile['email'] = user.email
     return profile
 

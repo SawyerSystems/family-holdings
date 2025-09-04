@@ -1,11 +1,24 @@
 from fastapi import APIRouter, Depends, HTTPException
 from datetime import datetime, timezone
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from dependencies import get_current_user, UserContext
 import supabase_client
 from models import StatsMeOut
 
 router = APIRouter(prefix="/stats", tags=["stats"])
+
+def _calculate_user_borrowing_limit(user_id: str, total_contributed: Decimal) -> Decimal:
+    """Calculate borrowing limit as 75% of user's total contributions"""
+    return (total_contributed * Decimal('0.75')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+def _get_user_current_loan_balance(user_id: str) -> Decimal:
+    """Get user's current outstanding loan balance"""
+    res = supabase_client.supabase.table('loans').select('remaining_balance').eq('user_id', user_id).eq('status', 'approved').execute()
+    if not res.data:
+        return Decimal('0.00')
+    
+    total_balance = sum(Decimal(str(loan.get('remaining_balance', 0))) for loan in res.data)
+    return Decimal(str(total_balance))
 
 @router.get("/me", response_model=StatsMeOut)
 def stats_me(user: UserContext = Depends(get_current_user)):
@@ -26,8 +39,10 @@ def stats_me(user: UserContext = Depends(get_current_user)):
 
     weekly = Decimal(str(profile.get('weekly_contribution') or 0))
     total_contributed = Decimal(str(profile.get('total_contributed') or 0))
-    borrowing_limit = Decimal(str(profile.get('borrowing_limit') or 0))
-    current_loan_balance = Decimal(str(profile.get('current_loan_balance') or 0))
+    
+    # Calculate borrowing limit as 75% of total contributions
+    calculated_borrowing_limit = _calculate_user_borrowing_limit(user.id, total_contributed)
+    current_loan_balance = _get_user_current_loan_balance(user.id)
 
     # Weeks active
     joined_raw = profile.get('joined_at')
@@ -51,5 +66,5 @@ def stats_me(user: UserContext = Depends(get_current_user)):
         actual_total=total_contributed,
         deficiency=deficiency,
         current_loan_balance=current_loan_balance,
-        borrowing_limit=borrowing_limit
+        borrowing_limit=calculated_borrowing_limit
     )

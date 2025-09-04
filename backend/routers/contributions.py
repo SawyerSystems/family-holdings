@@ -19,6 +19,15 @@ def all_contributions():
 def create_contribution(payload: ContributionCreate):
     insert = payload.dict()
     insert['status'] = 'pending'
+    
+    # Convert Decimal fields to float for JSON serialization
+    if 'expected_amount' in insert:
+        insert['expected_amount'] = float(insert['expected_amount'])
+    if 'paid_amount' in insert:
+        insert['paid_amount'] = float(insert['paid_amount'])
+    if 'late_fee' in insert:
+        insert['late_fee'] = float(insert['late_fee'])
+    
     res = supabase_client.supabase.table('contributions').insert(insert).execute()
     if not res.data:
         raise HTTPException(status_code=400, detail="Failed to create contribution")
@@ -33,10 +42,11 @@ def mark_paid(contribution_id: str, payload: ContributionMarkPaid, user: UserCon
     contrib = res.data[0]
     if user.role != 'admin' and contrib['user_id'] != user.id:
         raise HTTPException(status_code=403, detail="Forbidden")
-    if contrib['status'] == 'completed':
-        raise HTTPException(status_code=400, detail="Already completed")
+    if contrib['status'] == 'paid':
+        raise HTTPException(status_code=400, detail="Already paid")
     update = {
-        'status': 'completed',
+        'status': 'paid',
+        'paid_amount': float(payload.amount),
         'paid_at': datetime.utcnow().isoformat(),
         'method': payload.method or 'manual'
     }
