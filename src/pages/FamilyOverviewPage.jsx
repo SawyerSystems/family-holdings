@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
+import { User } from '@/api/entities';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
@@ -21,64 +22,58 @@ const FamilyOverviewPage = () => {
   const { user } = useAuth();
   const [showCreateMember, setShowCreateMember] = useState(false);
   const [expandedMember, setExpandedMember] = useState(null);
+  const [familyMembers, setFamilyMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
-  // Sample data for family members
-  const [familyMembers] = useState([
-    {
-      id: 'user1',
-      name: 'John Sawyer',
-      email: 'john@example.com',
-      role: 'admin',
-      avatar: 'https://ui-avatars.com/api/?name=John+Sawyer&background=6d28d9&color=fff',
-      totalContributed: 500,
-      activeLoans: 0,
-      contributionStatus: 'current',
-      joinDate: '01/15/2023',
-      lastContribution: '09/01/2023'
-    },
-    {
-      id: 'user2',
-      name: 'Lisa Sawyer',
-      email: 'lisa@example.com',
-      role: 'member',
-      avatar: 'https://ui-avatars.com/api/?name=Lisa+Sawyer&background=6d28d9&color=fff',
-      totalContributed: 400,
-      activeLoans: 0,
-      contributionStatus: 'current',
-      joinDate: '01/15/2023',
-      lastContribution: '09/01/2023'
-    },
-    {
-      id: 'user3',
-      name: 'Mark Sawyer',
-      email: 'mark@example.com',
-      role: 'member',
-      avatar: 'https://ui-avatars.com/api/?name=Mark+Sawyer&background=6d28d9&color=fff',
-      totalContributed: 350,
-      activeLoans: 1,
-      contributionStatus: 'late',
-      joinDate: '02/20/2023',
-      lastContribution: '08/20/2023'
-    },
-    {
-      id: 'user4',
-      name: 'Sarah Sawyer',
-      email: 'sarah@example.com',
-      role: 'member',
-      avatar: 'https://ui-avatars.com/api/?name=Sarah+Sawyer&background=6d28d9&color=fff',
-      totalContributed: 250,
-      activeLoans: 0,
-      contributionStatus: 'current',
-      joinDate: '03/10/2023',
-      lastContribution: '09/01/2023'
-    },
-  ]);
+  // Fetch real family members data
+  useEffect(() => {
+    const fetchFamilyMembers = async () => {
+      try {
+        setLoading(true);
+        const data = await User.getAll(); // returns raw array from backend
+        if (!Array.isArray(data)) {
+          console.warn('Unexpected users response shape', data);
+          setError('Failed to load family members');
+          return;
+        }
+        // Transform the raw backend records into the shape this component expects
+        const members = data.map(member => ({
+          id: member.id,
+          name: member.full_name || member.name || 'Unknown',
+          email: member.email || `${member.id}@familyholdings.local`,
+          role: member.role,
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(member.full_name || 'Unknown')}&background=${member.role === 'admin' ? 'dc2626' : '6d28d9'}&color=fff`,
+          totalContributed: parseFloat(member.total_contributed || 0),
+          activeLoans: parseFloat(member.current_loan_balance || 0),
+          borrowingLimit: parseFloat(member.borrowing_limit || 0),
+          weeklyContribution: parseFloat(member.weekly_contribution || 0),
+          contributionStatus: 'current', // TODO: derive from real recent contributions
+          joinDate: member.joined_at ? new Date(member.joined_at).toLocaleDateString() : new Date().toLocaleDateString(),
+          lastContribution: new Date().toLocaleDateString() // Placeholder until endpoint available
+        }));
+        setFamilyMembers(members);
+      } catch (err) {
+        console.error('Error fetching family members:', err);
+        setError('Failed to load family members');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFamilyMembers();
+  }, []);
+
+  // Calculate summary statistics from real data
+  const totalLifetimeContributions = familyMembers.reduce((sum, member) => sum + member.totalContributed, 0);
+  const activeMembersCount = familyMembers.filter(member => member.contributionStatus === 'current').length;
+  const currentMembersCount = familyMembers.length;
   
   // Sample contribution summary
   const contributionSummary = {
-    totalContributed: familyMembers.reduce((sum, member) => sum + member.totalContributed, 0),
+    totalContributed: totalLifetimeContributions,
     activeMembers: familyMembers.length,
-    currentMembers: familyMembers.filter(m => m.contributionStatus === 'current').length,
+    currentMembers: activeMembersCount,
     lateMembers: familyMembers.filter(m => m.contributionStatus === 'late').length
   };
   
@@ -120,26 +115,40 @@ const FamilyOverviewPage = () => {
   
   return (
     <div className="px-4 py-8">
-      <div className="flex flex-col mb-8 md:flex-row md:items-center md:justify-between">
-        <h1 className="text-3xl font-bold text-white">Family Overview</h1>
-        <Button 
-          variant={showCreateMember ? "outline" : "secondary"}
-          className="mt-4 md:mt-0"
-          onClick={() => setShowCreateMember(!showCreateMember)}
-        >
-          {showCreateMember ? (
-            <>Cancel</>
-          ) : (
-            <>
-              <UserPlus className="w-4 h-4 mr-2" />
-              Add Family Member
-            </>
-          )}
-        </Button>
-      </div>
+      {loading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-white">Loading family members...</div>
+        </div>
+      )}
       
-      {/* Add New Member Form */}
-      {showCreateMember && (
+      {error && (
+        <div className="mb-8 p-4 bg-red-900/30 border border-red-700 rounded-lg">
+          <div className="text-red-300">Error: {error}</div>
+        </div>
+      )}
+      
+      {!loading && !error && (
+        <>
+          <div className="flex flex-col mb-8 md:flex-row md:items-center md:justify-between">
+            <h1 className="text-3xl font-bold text-white">Family Overview</h1>
+            <Button 
+              variant={showCreateMember ? "outline" : "secondary"}
+              className="mt-4 md:mt-0"
+              onClick={() => setShowCreateMember(!showCreateMember)}
+            >
+              {showCreateMember ? (
+                <>Cancel</>
+              ) : (
+                <>
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Add Family Member
+                </>
+              )}
+            </Button>
+          </div>
+          
+          {/* Add New Member Form */}
+          {showCreateMember && (
         <Card className="mb-8 border-0 shadow-md bg-white/5 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="text-xl font-semibold text-white">Add New Family Member</CardTitle>
@@ -392,6 +401,8 @@ const FamilyOverviewPage = () => {
           </div>
         </CardContent>
       </Card>
+        </>
+      )}
     </div>
   );
 };
