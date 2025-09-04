@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, Navigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { useAuth } from '@/hooks/use-auth';
+import UserSwitcher from '@/components/UserSwitcher';
 
 // Icons
 import {
@@ -200,6 +201,30 @@ const MainLayout = ({ children }) => {
         
         {/* Main content */}
         <main className="flex-1 md:ml-64">
+          {/* Top bar with user switcher */}
+          <div className="sticky top-0 z-20 flex items-center justify-between px-4 py-3 bg-primary-900/80 backdrop-blur-md border-b border-white/10 shadow-sm">
+            <div className="flex items-center gap-4">
+              <h2 className="text-lg font-semibold text-white">
+                {location.pathname === '/dashboard' && 'Dashboard'}
+                {location.pathname === '/contributions' && 'Contributions'}
+                {location.pathname === '/loans' && 'Loans'}
+                {location.pathname === '/family-overview' && 'Family Overview'}
+                {location.pathname === '/settings' && 'Settings'}
+              </h2>
+              {isAdmin && (
+                <button
+                  onClick={toggleView}
+                  className="flex items-center gap-2 px-3 py-1 text-sm font-medium rounded-md border border-white/15 text-white/80 hover:text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent-400/50 focus:ring-offset-0 transition"
+                >
+                  <Eye className="h-4 w-4" />
+                  View as: <span className="hidden sm:inline">{viewAs === 'admin' ? 'Admin' : 'User'}</span>
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
+              <UserSwitcher />
+            </div>
+          </div>
           {children}
         </main>
       </div>
