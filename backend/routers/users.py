@@ -69,8 +69,55 @@ def signout():
 
 @router.get("", dependencies=[Depends(require_admin)])
 def list_users():
-    res = supabase_client.supabase.table('profiles').select('*').execute()
-    return res.data
+    """List all users enriched with current business logic derived fields.
+
+    Business rules applied per user:
+      - total_contributed: sum of paid contributions (contributions.status = 'paid')
+      - borrowing_limit: 75% of total_contributed (rounded to 2 decimals)
+      - current_loan_balance: aggregate remaining_balance of approved loans
+    Stored columns are not trusted for these derived values; they are recalculated live.
+    """
+    profiles_res = supabase_client.supabase.table('profiles').select('*').execute()
+    profiles = profiles_res.data or []
+
+    # Pre-fetch contributions & loans to reduce per-user round trips (basic optimization)
+    contrib_res = supabase_client.supabase.table('contributions').select('user_id, amount, status').eq('status', 'paid').execute()
+    loan_res = supabase_client.supabase.table('loans').select('user_id, remaining_balance, status').eq('status', 'approved').execute()
+
+    from decimal import Decimal
+    from collections import defaultdict
+
+    paid_contrib_sum = defaultdict(lambda: Decimal('0.00'))
+    if contrib_res.data:
+        for c in contrib_res.data:
+            try:
+                paid_contrib_sum[c.get('user_id')] += Decimal(str(c.get('amount', 0)))
+            except Exception:
+                continue
+
+    loan_balance_sum = defaultdict(lambda: Decimal('0.00'))
+    if loan_res.data:
+        for l in loan_res.data:
+            try:
+                loan_balance_sum[l.get('user_id')] += Decimal(str(l.get('remaining_balance', 0)))
+            except Exception:
+                continue
+
+    enriched = []
+    for p in profiles:
+        uid = p.get('id')
+        total_contributed = paid_contrib_sum[uid]
+        borrowing_limit = (total_contributed * Decimal('0.75')).quantize(Decimal('0.01'))
+        current_loan_balance = loan_balance_sum[uid]
+        # Preserve original profile fields and override / add derived ones as strings for JSON compatibility
+        enriched.append({
+            **p,
+            'total_contributed': str(total_contributed),
+            'borrowing_limit': str(borrowing_limit),
+            'current_loan_balance': str(current_loan_balance),
+        })
+
+    return enriched
 
 @router.post("", dependencies=[Depends(require_admin)], response_model=UserOut)
 def create_user(payload: UserCreate):
