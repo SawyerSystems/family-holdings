@@ -81,7 +81,8 @@ def list_users():
     profiles = profiles_res.data or []
 
     # Pre-fetch contributions & loans to reduce per-user round trips (basic optimization)
-    contrib_res = supabase_client.supabase.table('contributions').select('user_id, amount, status').eq('status', 'paid').execute()
+    # Use 'completed' which matches enum in schema (pending, completed, late, missed)
+    contrib_res = supabase_client.supabase.table('contributions').select('user_id, amount, status').eq('status', 'completed').execute()
     loan_res = supabase_client.supabase.table('loans').select('user_id, remaining_balance, status').eq('status', 'approved').execute()
 
     from decimal import Decimal
