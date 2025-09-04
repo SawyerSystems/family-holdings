@@ -112,13 +112,26 @@ export default function FamilyOverview() {
   useEffect(() => {
     async function loadFamilyData() {
       try {
-        // Load all family members
-        const membersData = await User.getAllMembers()
-        setMembers(membersData || [])
-        
-        // Load family stats
-        const stats = await User.getFamilyStats()
-        setFamilyStats(stats || {})
+        // Load all family members using existing API
+        const response = await User.getAll()
+        if (response.success) {
+          setMembers(response.data || [])
+          
+          // Calculate basic family stats from the member data
+          const totalMembers = response.data?.length || 0
+          const activeMembers = response.data?.filter(member => member.role !== 'inactive').length || 0
+          const totalContributions = response.data?.reduce((sum, member) => 
+            sum + parseFloat(member.total_contributed || 0), 0) || 0
+          
+          setFamilyStats({
+            totalMembers,
+            activeMembers,
+            totalContributions,
+            averageContribution: totalMembers > 0 ? totalContributions / totalMembers : 0
+          })
+        } else {
+          throw new Error('Failed to fetch family members')
+        }
         
         setLoading(false)
       } catch (error) {

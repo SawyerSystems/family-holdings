@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { apiClient } from '@/api/api-client';
 
 // Import API client (we'll implement this later)
 // import { supabase } from '@/api/supabaseClient';
@@ -15,6 +16,11 @@ export const AuthProvider = ({ children }) => {
   
   // For development mode, sign in automatically
   const isDevelopment = import.meta.env.DEV;
+
+  // Set up API client to use current user
+  useEffect(() => {
+    apiClient.setCurrentUserGetter(() => user);
+  }, [user]);
   
   useEffect(() => {
     // This simulates retrieving a user from localStorage or a real auth session
@@ -32,14 +38,29 @@ export const AuthProvider = ({ children }) => {
         }
         
         if (isDevelopment) {
-          // In development, set a mock user only if not signed out
-          const mockUser = {
-            id: 'dev-user-123',
-            email: 'dev@example.com',
-            name: 'Development User',
-            role: 'admin', // admin or member
-            avatar: 'https://ui-avatars.com/api/?name=Dev+User&background=6d28d9&color=fff',
-          };
+          let mockUser;
+          
+          // Check if there's a selected user from user switcher
+          const selectedUserId = localStorage.getItem('user-switcher.selectedUserId');
+          if (selectedUserId) {
+            // Use the selected user from the switcher
+            mockUser = {
+              id: selectedUserId,
+              email: 'switched-user@familyholdings.local',
+              name: 'Switched User',
+              role: 'admin', // Will be determined by the backend based on the actual user
+              avatar: 'https://ui-avatars.com/api/?name=Switched+User&background=6d28d9&color=fff',
+            };
+          } else {
+            // Default to Family Admin (the first user in our database)
+            mockUser = {
+              id: '5e98e9eb-375b-49f6-82bc-904df30c4021', // Family Admin UUID from our test data
+              email: 'admin@familyholdings.local',
+              name: 'Family Admin',
+              role: 'admin',
+              avatar: 'https://ui-avatars.com/api/?name=Family+Admin&background=dc2626&color=fff',
+            };
+          }
           
           setUser(mockUser);
           localStorage.setItem('auth.user', JSON.stringify(mockUser));
@@ -154,12 +175,40 @@ export const AuthProvider = ({ children }) => {
       return { success: false, error: error.message };
     }
   };
+
+  // Switch user function (for development/testing)
+  const switchUser = async (newUser) => {
+    try {
+      if (!import.meta.env.DEV) {
+        throw new Error('User switching is only available in development mode');
+      }
+
+      const mockUser = {
+        id: newUser.id,
+        email: newUser.email,
+        name: newUser.name,
+        role: newUser.role,
+        avatar: newUser.avatar,
+      };
+      
+      setUser(mockUser);
+      localStorage.setItem('auth.user', JSON.stringify(mockUser));
+      localStorage.removeItem('auth.signedOut'); // Clear signed out flag
+      setHasSignedOut(false);
+      
+      return { success: true, user: mockUser };
+    } catch (error) {
+      console.error('Switch user error:', error);
+      return { success: false, error: error.message };
+    }
+  };
   
   const value = {
     user,
     loading,
     signIn,
     signOut,
+    switchUser,
     isAuthenticated: !!user,
   };
   

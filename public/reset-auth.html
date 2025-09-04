@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reset Authentication</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        button { background: #dc2626; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-size: 16px; cursor: pointer; }
+        button:hover { background: #b91c1c; }
+        .success { color: #16a34a; font-weight: bold; margin-top: 20px; }
+        .info { background: #f3f4f6; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <h1>Authentication Reset Tool</h1>
+    
+    <div class="info">
+        <p><strong>This tool will reset your authentication state</strong></p>
+        <p>Use this when you're seeing UUID errors or "Failed to load family members"</p>
+    </div>
+
+    <button onclick="resetAuth()">Reset Authentication</button>
+    
+    <div id="status"></div>
+
+    <script>
+        function resetAuth() {
+            // Clear all auth-related localStorage items
+            localStorage.removeItem('auth.user');
+            localStorage.removeItem('auth.signedOut');
+            localStorage.removeItem('user-switcher.selectedUserId');
+            
+            // Set the correct Family Admin user
+            const familyAdmin = {
+                id: '5e98e9eb-375b-49f6-82bc-904df30c4021',
+                email: 'admin@familyholdings.local',
+                name: 'Family Admin',
+                role: 'admin',
+                avatar: 'https://ui-avatars.com/api/?name=Family+Admin&background=dc2626&color=fff'
+            };
+            
+            localStorage.setItem('auth.user', JSON.stringify(familyAdmin));
+            
+            document.getElementById('status').innerHTML = '<div class="success">✅ Authentication reset complete!</div><p>Please refresh your main application now.</p>';
+            
+            console.log('Authentication reset to Family Admin:', familyAdmin);
+        }
+    </script>
+</body>
+</html>
