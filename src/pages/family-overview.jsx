@@ -113,25 +113,21 @@ export default function FamilyOverview() {
     async function loadFamilyData() {
       try {
         // Load all family members using existing API
-        const response = await User.getAll()
-        if (response.success) {
-          setMembers(response.data || [])
-          
-          // Calculate basic family stats from the member data
-          const totalMembers = response.data?.length || 0
-          const activeMembers = response.data?.filter(member => member.role !== 'inactive').length || 0
-          const totalContributions = response.data?.reduce((sum, member) => 
-            sum + parseFloat(member.total_contributed || 0), 0) || 0
-          
-          setFamilyStats({
-            totalMembers,
-            activeMembers,
-            totalContributions,
-            averageContribution: totalMembers > 0 ? totalContributions / totalMembers : 0
-          })
-        } else {
-          throw new Error('Failed to fetch family members')
-        }
+        const members = await User.getAll()
+        setMembers(members || [])
+        
+        // Calculate basic family stats from the member data
+        const totalMembers = members?.length || 0
+        const activeMembers = members?.filter(member => member.role !== 'inactive').length || 0
+        const totalContributions = members?.reduce((sum, member) => 
+          sum + parseFloat(member.total_contributed || 0), 0) || 0
+        
+        setFamilyStats({
+          totalMembers,
+          activeMembers,
+          totalContributions,
+          averageContribution: totalMembers > 0 ? totalContributions / totalMembers : 0
+        })
         
         setLoading(false)
       } catch (error) {
