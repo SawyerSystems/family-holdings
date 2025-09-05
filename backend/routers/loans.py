@@ -9,7 +9,15 @@ from db_utils import update_user_totals_after_loan_change, update_user_totals_af
 router = APIRouter(prefix="/loans", tags=["loans"])
 
 def _calculate_user_borrowing_limit(user_id: str) -> Decimal:
-    """Calculate borrowing limit as 75% of user's total paid contributions"""
+    """Calculate borrowing limit based on user's borrow_limit_percent and total paid contributions"""
+    # Get user's borrow_limit_percent setting
+    user_res = supabase_client.supabase.table('users').select('borrow_limit_percent').eq('id', user_id).execute()
+    
+    if not user_res.data:
+        return Decimal('0.00')
+    
+    borrow_limit_percent = Decimal(str(user_res.data[0].get('borrow_limit_percent', 75.0)))
+    
     # Get user's total paid contributions
     contrib_res = supabase_client.supabase.table('contributions').select('amount').eq('user_id', user_id).eq('status', 'paid').execute()
     
@@ -17,8 +25,8 @@ def _calculate_user_borrowing_limit(user_id: str) -> Decimal:
     if contrib_res.data:
         total_contributed = sum(Decimal(str(contrib.get('amount', 0))) for contrib in contrib_res.data)
     
-    # Calculate 75% of total contributions with proper rounding
-    borrowing_limit = (total_contributed * Decimal('0.75')).quantize(Decimal('0.01'))
+    # Calculate borrowing limit using user's configurable percentage
+    borrowing_limit = (total_contributed * (borrow_limit_percent / Decimal('100'))).quantize(Decimal('0.01'))
     
     return borrowing_limit
 

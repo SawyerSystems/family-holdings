@@ -12,15 +12,16 @@ class UserCreate(BaseModel):
 class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     weekly_contribution: Optional[Decimal] = Field(default=None, ge=0)
+    borrow_limit_percent: Optional[Decimal] = Field(default=None, ge=0, le=100, description="Borrowing limit as percentage (0-100)")
 
 class UserOut(BaseModel):
     id: str
-    email: EmailStr | None = None
+    email: str | None = None
     full_name: str | None = None
     role: str
     weekly_contribution: Optional[Decimal] = None
     total_contributed: Optional[Decimal] = None
-    borrowing_limit: Optional[Decimal] = None
+    borrow_limit_percent: Optional[Decimal] = None
     current_loan_balance: Optional[Decimal] = None
 
 class ContributionCreate(BaseModel):

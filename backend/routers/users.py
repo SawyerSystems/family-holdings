@@ -8,7 +8,15 @@ from decimal import Decimal
 router = APIRouter(prefix="/users", tags=["users"])
 
 def _calculate_user_borrowing_limit(user_id: str) -> Decimal:
-    """Calculate borrowing limit as 75% of user's total paid contributions"""
+    """Calculate borrowing limit based on user's borrow_limit_percent and total paid contributions"""
+    # Get user's borrow_limit_percent setting
+    user_res = supabase_client.supabase.table('users').select('borrow_limit_percent').eq('id', user_id).execute()
+    
+    if not user_res.data:
+        return Decimal('0.00')
+    
+    borrow_limit_percent = Decimal(str(user_res.data[0].get('borrow_limit_percent', 75.0)))
+    
     # Get user's total paid contributions
     contrib_res = supabase_client.supabase.table('contributions').select('amount').eq('user_id', user_id).eq('status', 'paid').execute()
     
@@ -16,8 +24,8 @@ def _calculate_user_borrowing_limit(user_id: str) -> Decimal:
     if contrib_res.data:
         total_contributed = sum(Decimal(str(contrib.get('amount', 0))) for contrib in contrib_res.data)
     
-    # Calculate 75% of total contributions with proper rounding
-    borrowing_limit = (total_contributed * Decimal('0.75')).quantize(Decimal('0.01'))
+    # Calculate borrowing limit using user's configurable percentage
+    borrowing_limit = (total_contributed * (borrow_limit_percent / Decimal('100'))).quantize(Decimal('0.01'))
     
     return borrowing_limit
 
@@ -73,12 +81,12 @@ def list_users():
 
     Business rules applied per user:
       - total_contributed: sum of paid contributions (contributions.status = 'paid')
-      - borrowing_limit: 75% of total_contributed (rounded to 2 decimals)
+      - borrowing_limit: user's borrow_limit_percent of total_contributed (rounded to 2 decimals)
       - current_loan_balance: aggregate remaining_balance of approved loans
     Stored columns are not trusted for these derived values; they are recalculated live.
     """
-    profiles_res = supabase_client.supabase.table('profiles').select('*').execute()
-    profiles = profiles_res.data or []
+    users_res = supabase_client.supabase.table('users').select('*').execute()
+    users = users_res.data or []
 
     # Pre-fetch contributions & loans to reduce per-user round trips (basic optimization)
     # Use 'completed' which matches enum in schema (pending, completed, late, missed)
@@ -105,16 +113,20 @@ def list_users():
                 continue
 
     enriched = []
-    for p in profiles:
-        uid = p.get('id')
+    for user in users:
+        uid = user.get('id')
         total_contributed = paid_contrib_sum[uid]
-        borrowing_limit = (total_contributed * Decimal('0.75')).quantize(Decimal('0.01'))
+        
+        # Get user's borrow_limit_percent for dynamic calculation
+        borrow_limit_percent = Decimal(str(user.get('borrow_limit_percent', 75.0)))
+        borrowing_limit = (total_contributed * (borrow_limit_percent / Decimal('100'))).quantize(Decimal('0.01'))
+        
         current_loan_balance = loan_balance_sum[uid]
-        # Preserve original profile fields and override / add derived ones as strings for JSON compatibility
+        # Preserve original user fields and override / add derived ones as strings for JSON compatibility
         enriched.append({
-            **p,
+            **user,
             'total_contributed': str(total_contributed),
-            'borrowing_limit': str(borrowing_limit),
+            'borrow_limit_percent': str(borrow_limit_percent),
             'current_loan_balance': str(current_loan_balance),
         })
 
@@ -142,7 +154,13 @@ def update_user(user_id: str, payload: UserUpdate):
     update_fields = {k: v for k, v in payload.dict(exclude_unset=True).items() if v is not None}
     if not update_fields:
         raise HTTPException(status_code=400, detail="No fields to update")
-    res = supabase_client.supabase.table('profiles').update(update_fields).eq('id', user_id).execute()
+    
+    # Convert Decimal values to float for JSON serialization
+    for key, value in update_fields.items():
+        if isinstance(value, Decimal):
+            update_fields[key] = float(value)
+    
+    res = supabase_client.supabase.table('users').update(update_fields).eq('id', user_id).execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="User not found")
     return res.data[0]
@@ -151,7 +169,7 @@ def update_user(user_id: str, payload: UserUpdate):
 def get_user(user_id: str, user: UserContext = Depends(get_current_user)):
     if user.role != 'admin' and user.id != user_id:
         raise HTTPException(status_code=403, detail="Forbidden")
-    res = supabase_client.supabase.table('profiles').select('*').eq('id', user_id).execute()
+    res = supabase_client.supabase.table('users').select('*').eq('id', user_id).execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="User not found")
     return res.data[0]

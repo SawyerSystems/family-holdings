@@ -8,8 +8,16 @@ from models import StatsMeOut
 router = APIRouter(prefix="/stats", tags=["stats"])
 
 def _calculate_user_borrowing_limit(user_id: str, total_contributed: Decimal) -> Decimal:
-    """Calculate borrowing limit as 75% of user's total contributions"""
-    return (total_contributed * Decimal('0.75')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    """Calculate borrowing limit based on user's borrow_limit_percent and total contributions"""
+    # Get user's borrow_limit_percent setting
+    user_res = supabase_client.supabase.table('users').select('borrow_limit_percent').eq('id', user_id).execute()
+    
+    if not user_res.data:
+        borrow_limit_percent = Decimal('75.0')  # Default fallback
+    else:
+        borrow_limit_percent = Decimal(str(user_res.data[0].get('borrow_limit_percent', 75.0)))
+    
+    return (total_contributed * (borrow_limit_percent / Decimal('100'))).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
 def _get_user_current_loan_balance(user_id: str) -> Decimal:
     """Get user's current outstanding loan balance"""
