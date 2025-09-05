@@ -5,7 +5,10 @@
       "label": "Dev: Start Frontend",
       "type": "shell",
       "command": "npm",
-      "args": ["run", "dev"],
+      "args": [
+        "run",
+        "dev"
+      ],
       "group": "build",
       "presentation": {
         "echo": true,
@@ -25,7 +28,10 @@
       "label": "Dev: Start Backend",
       "type": "shell",
       "command": "npm",
-      "args": ["run", "backend:dev"],
+      "args": [
+        "run",
+        "backend:dev"
+      ],
       "group": "build",
       "presentation": {
         "echo": true,
@@ -45,7 +51,10 @@
       "label": "Dev: Start Full Stack",
       "type": "shell",
       "command": "npm",
-      "args": ["run", "dev:full"],
+      "args": [
+        "run",
+        "dev:full"
+      ],
       "group": "build",
       "presentation": {
         "echo": true,
@@ -65,7 +74,10 @@
       "label": "Dev: Clean Start",
       "type": "shell",
       "command": "npm",
-      "args": ["run", "kill:all"],
+      "args": [
+        "run",
+        "kill:all"
+      ],
       "group": "build",
       "presentation": {
         "echo": true,
@@ -83,7 +95,10 @@
       "label": "Dev: Kill Ports",
       "type": "shell",
       "command": "npm",
-      "args": ["run", "kill:all"],
+      "args": [
+        "run",
+        "kill:all"
+      ],
       "group": "build",
       "presentation": {
         "echo": true,
@@ -98,7 +113,10 @@
       "label": "Type Check",
       "type": "shell",
       "command": "npm",
-      "args": ["run", "type-check"],
+      "args": [
+        "run",
+        "type-check"
+      ],
       "group": "test",
       "presentation": {
         "echo": true,
@@ -114,7 +132,10 @@
       "label": "Lint",
       "type": "shell",
       "command": "npm",
-      "args": ["run", "lint"],
+      "args": [
+        "run",
+        "lint"
+      ],
       "group": "test",
       "presentation": {
         "echo": true,
@@ -130,7 +151,10 @@
       "label": "Lint: Fix",
       "type": "shell",
       "command": "npm",
-      "args": ["run", "lint:fix"],
+      "args": [
+        "run",
+        "lint:fix"
+      ],
       "group": "test",
       "presentation": {
         "echo": true,
@@ -146,7 +170,10 @@
       "label": "Format Code",
       "type": "shell",
       "command": "npm",
-      "args": ["run", "format"],
+      "args": [
+        "run",
+        "format"
+      ],
       "group": "test",
       "presentation": {
         "echo": true,
@@ -161,7 +188,10 @@
       "label": "Test: Run",
       "type": "shell",
       "command": "npm",
-      "args": ["run", "test:run"],
+      "args": [
+        "run",
+        "test:run"
+      ],
       "group": "test",
       "presentation": {
         "echo": true,
@@ -177,7 +207,10 @@
       "label": "Test: Watch",
       "type": "shell",
       "command": "npm",
-      "args": ["run", "test"],
+      "args": [
+        "run",
+        "test"
+      ],
       "group": "test",
       "presentation": {
         "echo": true,
@@ -197,7 +230,10 @@
       "label": "Test: Coverage",
       "type": "shell",
       "command": "npm",
-      "args": ["run", "test:coverage"],
+      "args": [
+        "run",
+        "test:coverage"
+      ],
       "group": "test",
       "presentation": {
         "echo": true,
@@ -212,7 +248,10 @@
       "label": "Build",
       "type": "shell",
       "command": "npm",
-      "args": ["run", "build"],
+      "args": [
+        "run",
+        "build"
+      ],
       "group": "build",
       "presentation": {
         "echo": true,
@@ -228,7 +267,10 @@
       "label": "Preview",
       "type": "shell",
       "command": "npm",
-      "args": ["run", "preview"],
+      "args": [
+        "run",
+        "preview"
+      ],
       "group": "build",
       "presentation": {
         "echo": true,
@@ -248,7 +290,10 @@
       "label": "Backend: Setup",
       "type": "shell",
       "command": "npm",
-      "args": ["run", "backend:setup"],
+      "args": [
+        "run",
+        "backend:setup"
+      ],
       "group": "build",
       "presentation": {
         "echo": true,
@@ -263,7 +308,10 @@
       "label": "Backend: Test",
       "type": "shell",
       "command": "npm",
-      "args": ["run", "backend:test"],
+      "args": [
+        "run",
+        "backend:test"
+      ],
       "group": "test",
       "presentation": {
         "echo": true,
@@ -278,7 +326,10 @@
       "label": "Database: Test Connection",
       "type": "shell",
       "command": "npm",
-      "args": ["run", "db:test"],
+      "args": [
+        "run",
+        "db:test"
+      ],
       "group": "test",
       "presentation": {
         "echo": true,
@@ -293,7 +344,10 @@
       "label": "Health Check",
       "type": "shell",
       "command": "npm",
-      "args": ["run", "health:check"],
+      "args": [
+        "run",
+        "health:check"
+      ],
       "group": "test",
       "presentation": {
         "echo": true,

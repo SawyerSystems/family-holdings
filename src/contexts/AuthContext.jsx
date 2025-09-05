@@ -54,7 +54,14 @@ export const AuthProvider = ({ children }) => {
 
           let mockUser;
           const selectedUserId = localStorage.getItem('user-switcher.selectedUserId');
-          if (selectedUserId) {
+          
+          // UUID validation function
+          const isValidUUID = (uuid) => {
+            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+            return uuidRegex.test(uuid);
+          };
+
+          if (selectedUserId && isValidUUID(selectedUserId)) {
             // Construct a generic switched user placeholder; real role resolved by backend headers
             mockUser = {
               id: selectedUserId,
@@ -64,6 +71,12 @@ export const AuthProvider = ({ children }) => {
               avatar: 'https://ui-avatars.com/api/?name=Switched+User&background=6d28d9&color=fff',
             };
           } else {
+            // Clear invalid user ID from localStorage
+            if (selectedUserId && !isValidUUID(selectedUserId)) {
+              console.warn('Invalid user ID found in localStorage, clearing:', selectedUserId);
+              localStorage.removeItem('user-switcher.selectedUserId');
+            }
+            
             mockUser = {
               id: '5e98e9eb-375b-49f6-82bc-904df30c4021',
               email: 'admin@familyholdings.local',
