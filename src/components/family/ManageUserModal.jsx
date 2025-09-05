@@ -25,7 +25,7 @@ const ManageUserModal = ({ isOpen, onClose, user, onUserUpdated }) => {
     email: '',
     role: 'member',
     weekly_contribution: 0,
-    borrowing_limit: 0,
+    borrow_limit_percent: 75,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -39,7 +39,7 @@ const ManageUserModal = ({ isOpen, onClose, user, onUserUpdated }) => {
         email: '', // Start with empty email since most users don't have one
         role: user.role || 'member',
         weekly_contribution: user.weeklyContribution || 0,
-        borrowing_limit: user.borrowingLimit || 0,
+        borrow_limit_percent: user.borrowLimitPercent || 75,
       });
       setError(''); // Clear any previous errors
     }
@@ -61,7 +61,7 @@ const ManageUserModal = ({ isOpen, onClose, user, onUserUpdated }) => {
           email: formData.email,
           role: formData.role,
           weekly_contribution: parseFloat(formData.weekly_contribution),
-          borrowing_limit: parseFloat(formData.borrowing_limit),
+          borrow_limit_percent: parseFloat(formData.borrow_limit_percent),
         }),
       });
 
@@ -150,14 +150,16 @@ const ManageUserModal = ({ isOpen, onClose, user, onUserUpdated }) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="borrowing_limit" className="text-white">Borrowing Limit ($)</Label>
+            <Label htmlFor="borrow_limit_percent" className="text-white">Borrowing Limit (%)</Label>
             <Input
-              id="borrowing_limit"
+              id="borrow_limit_percent"
               type="number"
-              step="0.01"
+              step="0.1"
               min="0"
-              value={formData.borrowing_limit}
-              onChange={(e) => handleInputChange('borrowing_limit', e.target.value)}
+              max="100"
+              value={formData.borrow_limit_percent}
+              onChange={(e) => handleInputChange('borrow_limit_percent', e.target.value)}
+              placeholder="e.g., 75 for 75%"
               className="bg-primary-800 border-white/20 text-white"
               required
             />

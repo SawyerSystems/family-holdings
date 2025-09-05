@@ -54,7 +54,7 @@ const FamilyOverviewPage = () => {
           avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(member.full_name || 'Unknown')}&background=${member.role === 'admin' ? 'dc2626' : '6d28d9'}&color=fff`,
           totalContributed: parseFloat(member.total_contributed || 0),
           activeLoans: parseFloat(member.current_loan_balance || 0),
-          borrowingLimit: parseFloat(member.borrowing_limit || 0),
+          borrowLimitPercent: parseFloat(member.borrow_limit_percent || 75),
           weeklyContribution: parseFloat(member.weekly_contribution || 0),
           contributionStatus: 'current', // TODO: derive from real recent contributions
           joinDate: member.joined_at ? new Date(member.joined_at).toLocaleDateString() : new Date().toLocaleDateString(),
@@ -136,7 +136,7 @@ const FamilyOverviewPage = () => {
               email: updatedUser.email,
               role: updatedUser.role,
               weeklyContribution: updatedUser.weekly_contribution,
-              borrowingLimit: updatedUser.borrowing_limit
+              borrowLimitPercent: updatedUser.borrow_limit_percent
             }
           : member
       )
@@ -157,7 +157,7 @@ const FamilyOverviewPage = () => {
             avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(member.full_name || 'Unknown')}&background=${member.role === 'admin' ? 'dc2626' : '6d28d9'}&color=fff`,
             totalContributed: parseFloat(member.total_contributed || 0),
             activeLoans: parseFloat(member.current_loan_balance || 0),
-            borrowingLimit: parseFloat(member.borrowing_limit || 0),
+            borrowLimitPercent: parseFloat(member.borrow_limit_percent || 75),
             weeklyContribution: parseFloat(member.weekly_contribution || 0),
             contributionStatus: 'current',
             joinDate: member.joined_at ? new Date(member.joined_at).toLocaleDateString() : new Date().toLocaleDateString(),
