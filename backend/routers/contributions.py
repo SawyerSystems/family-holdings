@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from dependencies import get_current_user, require_admin, UserContext
 import supabase_client
 from models import ContributionCreate, ContributionOut, ContributionMarkPaid, ContributionUpdate
-from datetime import datetime
+from datetime import datetime, date
+import decimal
 
 router = APIRouter(prefix="/contributions", tags=["contributions"])
 
@@ -42,10 +43,10 @@ def mark_completed(contribution_id: str, payload: ContributionMarkPaid, user: Us
     contrib = res.data[0]
     if user.role != 'admin' and contrib['user_id'] != user.id:
         raise HTTPException(status_code=403, detail="Forbidden")
-    if contrib['status'] == 'completed':
+    if contrib['status'] == 'paid':
         raise HTTPException(status_code=400, detail="Already completed")
     update = {
-        'status': 'completed',
+        'status': 'paid',
         'amount': float(payload.amount) if payload.amount is not None else contrib.get('amount'),
         'paid_at': datetime.utcnow().isoformat(),
         'method': payload.method or 'manual'
@@ -69,9 +70,20 @@ def mark_missed(contribution_id: str):
 
 @router.patch("/{contribution_id}", dependencies=[Depends(require_admin)])
 def update_contribution(contribution_id: str, payload: ContributionUpdate):
-    update = {k: v for k, v in payload.dict(exclude_unset=True).items() if v is not None}
+    update = {}
+    for k, v in payload.dict(exclude_unset=True).items():
+        if v is not None:
+            # Convert non-JSON serializable types
+            if isinstance(v, decimal.Decimal):
+                update[k] = float(v)
+            elif isinstance(v, date):
+                update[k] = v.isoformat()
+            else:
+                update[k] = v
+    
     if not update:
         raise HTTPException(status_code=400, detail="No fields to update")
+    
     res = supabase_client.supabase.table('contributions').update(update).eq('id', contribution_id).execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Contribution not found")
