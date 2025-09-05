@@ -14,8 +14,8 @@ def recalculate_user_totals(user_id):
     contrib_res = supabase.table('contributions').select('amount').eq('user_id', user_id).eq('status', 'paid').execute()
     total_contributed = sum(float(contrib['amount']) for contrib in contrib_res.data)
     
-    # Calculate current loan balance (active loans only)
-    loans_res = supabase.table('loans').select('remaining_balance').eq('user_id', user_id).eq('status', 'active').execute()
+    # Calculate current loan balance (approved loans only)
+    loans_res = supabase.table('loans').select('remaining_balance').eq('user_id', user_id).eq('status', 'approved').execute()
     current_loan_balance = sum(float(loan['remaining_balance']) for loan in loans_res.data)
     
     # Update the profile

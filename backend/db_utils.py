@@ -3,7 +3,7 @@ Database utilities for maintaining calculated fields.
 This module provides functions to keep total_contributed and current_loan_balance accurate.
 """
 
-from backend.supabase_client import supabase
+from supabase_client import supabase
 
 def recalculate_user_totals(user_id: str):
     """
