@@ -7,8 +7,8 @@ const LoginPage = () => {
   const { signIn, user, isLoading } = useAuth();
   const navigate = useNavigate();
   
-  const [email, setEmail] = React.useState('demo@example.com');
-  const [password, setPassword] = React.useState('password123');
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
   const [error, setError] = React.useState(null);
   const [loading, setLoading] = React.useState(false);
   
@@ -25,32 +25,11 @@ const LoginPage = () => {
     setError(null);
     
     try {
-      // For development mode, use mock authentication
-      if (import.meta.env.DEV && email === 'demo@example.com') {
-        console.log("DEV MODE: Using mock authentication");
-        
-        // Create a dev user for testing
-        const devUser = {
-          id: 'dev-user-1',
-          email: email,
-          name: 'Development User',
-          role: 'admin'
-        };
-        
-        // Store the dev user in localStorage for persistence
-        localStorage.setItem('family_holdings_dev_user', JSON.stringify(devUser));
-        
-        // Dispatch custom event to update auth context
-        window.dispatchEvent(new CustomEvent('dev-auth-change', { 
-          detail: { user: devUser }
-        }));
-        
-        navigate('/dashboard');
-        return;
+      // Delegate to AuthContext (handles dev/prod internally)
+      const result = await signIn({ email, password });
+      if (result?.success === false) {
+        throw new Error(result.error || 'Failed to sign in');
       }
-      
-      // Otherwise use real authentication
-      await signIn(email, password);
       navigate('/dashboard');
     } catch (err) {
       console.error("Login failed:", err);

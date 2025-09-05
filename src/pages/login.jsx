@@ -5,8 +5,8 @@ import { useNavigate } from 'react-router-dom'
 import { LoadingSpinner } from '@/components/loading-screen'
 
 export default function Login() {
-  const [email, setEmail] = useState('demo@example.com')
-  const [password, setPassword] = useState('password123')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const navigate = useNavigate()
@@ -20,15 +20,13 @@ export default function Login() {
 
     try {
       // For development mode, skip actual authentication
-      if (import.meta.env.MODE === 'development' && 
-          email === 'demo@example.com' && 
-          password === 'password123') {
+      if (import.meta.env.MODE === 'development') {
         console.log("DEV MODE: Using mock authentication")
         
         // Create fake user session for development
         const devUser = {
           id: 'dev-user-1',
-          email: email,
+          email: email || 'demo@example.com',
           user_metadata: { name: 'Development User' },
           role: 'admin'
         }
@@ -128,7 +126,6 @@ export default function Login() {
           <div className="space-y-1">
             <input
               type="email"
-              placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -139,7 +136,6 @@ export default function Login() {
           <div className="space-y-1">
             <input
               type="password"
-              placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
