@@ -4,6 +4,7 @@ import supabase_client
 from models import ContributionCreate, ContributionOut, ContributionMarkPaid, ContributionUpdate
 from datetime import datetime, date
 import decimal
+from db_utils import update_user_totals_after_contribution_change
 
 router = APIRouter(prefix="/contributions", tags=["contributions"])
 
@@ -52,13 +53,26 @@ def mark_completed(contribution_id: str, payload: ContributionMarkPaid, user: Us
         'method': payload.method or 'manual'
     }
     res2 = supabase_client.supabase.table('contributions').update(update).eq('id', contribution_id).execute()
+    
+    # Update user totals after contribution status change
+    update_user_totals_after_contribution_change(contrib['user_id'])
+    
     return res2.data[0] if res2.data else update
 
 @router.post("/{contribution_id}/mark-late", dependencies=[Depends(require_admin)])
 def mark_late(contribution_id: str):
+    # Fetch contribution first to get user_id
+    contrib_res = supabase_client.supabase.table('contributions').select('user_id').eq('id', contribution_id).execute()
+    if not contrib_res.data:
+        raise HTTPException(status_code=404, detail="Contribution not found")
+    
     res = supabase_client.supabase.table('contributions').update({'status': 'late'}).eq('id', contribution_id).execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Contribution not found")
+    
+    # Update user totals after contribution status change
+    update_user_totals_after_contribution_change(contrib_res.data[0]['user_id'])
+    
     return res.data[0]
 
 @router.post("/{contribution_id}/mark-missed", dependencies=[Depends(require_admin)])

@@ -4,6 +4,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from dependencies import get_current_user, require_admin, UserContext
 import supabase_client
 from models import LoanRequest, LoanActionResponse, LoanPayment
+from db_utils import update_user_totals_after_loan_change, update_user_totals_after_payment
 
 router = APIRouter(prefix="/loans", tags=["loans"])
 
@@ -101,6 +102,10 @@ def approve_loan(loan_id: str):
         raise HTTPException(status_code=400, detail="Loan not pending")
     update = {'status': 'approved', 'approved_at': datetime.utcnow().isoformat()}
     res = supabase_client.supabase.table('loans').update(update).eq('id', loan_id).execute()
+    
+    # Update user totals after loan approval
+    update_user_totals_after_loan_change(loan['user_id'])
+    
     row = res.data[0]
     return LoanActionResponse(id=row['id'], status=row['status'], amount=Decimal(str(row['amount'])), remaining_balance=Decimal(str(row['remaining_balance'])), weekly_payment=Decimal(str(row['weekly_payment'])))
 
@@ -122,6 +127,10 @@ def cancel_loan(loan_id: str, user: UserContext = Depends(get_current_user)):
     if loan['status'] not in ['pending']:
         raise HTTPException(status_code=400, detail="Only pending loans can be cancelled")
     res = supabase_client.supabase.table('loans').update({'status': 'rejected', 'rejected_at': datetime.utcnow().isoformat()}).eq('id', loan_id).execute()
+    
+    # Update user totals after loan cancellation
+    update_user_totals_after_loan_change(loan['user_id'])
+    
     row = res.data[0]
     return LoanActionResponse(id=row['id'], status=row['status'], amount=Decimal(str(row['amount'])))
 
@@ -149,6 +158,10 @@ def loan_payment(loan_id: str, payload: LoanPayment, user: UserContext = Depends
     }).execute()
     # Update the loan
     res = supabase_client.supabase.table('loans').update(update).eq('id', loan_id).execute()
+    
+    # Update user totals after loan payment
+    update_user_totals_after_payment(loan['user_id'], loan_id)
+    
     row = res.data[0]
     return LoanActionResponse(id=row['id'], status=row['status'], amount=Decimal(str(row['amount'])), remaining_balance=Decimal(str(row['remaining_balance'])), weekly_payment=Decimal(str(row['weekly_payment'])) if row.get('weekly_payment') is not None else None)
 

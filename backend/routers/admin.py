@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends
 from decimal import Decimal
-from dependencies import require_admin
+from dependencies import require_admin, UserContext
 import supabase_client
+from db_utils import recalculate_all_user_totals, recalculate_user_totals
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -74,4 +75,28 @@ def update_all_borrowing_limits():
     return {
         "message": f"Updated borrowing limits for {len(updated_users)} users",
         "updated_users": updated_users
+    }
+
+@router.post("/recalculate-all-totals-v2")
+def recalculate_all_user_totals_endpoint(user: UserContext = Depends(require_admin)):
+    """
+    Recalculate total_contributed and current_loan_balance for all users.
+    This is the improved version that handles both contributions and loans.
+    """
+    results = recalculate_all_user_totals()
+    return {
+        "message": "All user totals recalculated successfully",
+        "users_updated": len(results),
+        "results": results
+    }
+
+@router.post("/recalculate-user-totals/{user_id}")
+def recalculate_single_user_totals_endpoint(user_id: str, user: UserContext = Depends(require_admin)):
+    """
+    Recalculate totals for a specific user.
+    """
+    result = recalculate_user_totals(user_id)
+    return {
+        "message": f"User totals recalculated successfully for user {user_id}",
+        "result": result
     }
