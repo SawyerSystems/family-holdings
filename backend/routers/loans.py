@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
 from dependencies import get_current_user, require_admin, UserContext
 import supabase_client
-from models import LoanRequest, LoanActionResponse
+from models import LoanRequest, LoanActionResponse, LoanPayment
 
 router = APIRouter(prefix="/loans", tags=["loans"])
 
@@ -114,9 +114,20 @@ def reject_loan(loan_id: str):
     row = res.data[0]
     return LoanActionResponse(id=row['id'], status=row['status'], amount=Decimal(str(row['amount'])))
 
+@router.post("/{loan_id}/cancel")
+def cancel_loan(loan_id: str, user: UserContext = Depends(get_current_user)):
+    loan = _fetch_loan(loan_id)
+    if user.role != 'admin' and loan['user_id'] != user.id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    if loan['status'] not in ['pending']:
+        raise HTTPException(status_code=400, detail="Only pending loans can be cancelled")
+    res = supabase_client.supabase.table('loans').update({'status': 'rejected', 'rejected_at': datetime.utcnow().isoformat()}).eq('id', loan_id).execute()
+    row = res.data[0]
+    return LoanActionResponse(id=row['id'], status=row['status'], amount=Decimal(str(row['amount'])))
+
 @router.post("/{loan_id}/payment", response_model=LoanActionResponse)
-def loan_payment(loan_id: str, payload: dict, user: UserContext = Depends(get_current_user)):
-    amount = Decimal(str(payload.get('amount', 0)))
+def loan_payment(loan_id: str, payload: LoanPayment, user: UserContext = Depends(get_current_user)):
+    amount = payload.amount
     if amount <= 0:
         raise HTTPException(status_code=400, detail="Invalid amount")
     loan = _fetch_loan(loan_id)
@@ -129,6 +140,22 @@ def loan_payment(loan_id: str, payload: dict, user: UserContext = Depends(get_cu
         update = {'remaining_balance': 0, 'status': 'paid'}
     else:
         update = {'remaining_balance': float(remaining)}
+    # Record the payment
+    supabase_client.supabase.table('loan_payments').insert({
+        'loan_id': loan_id,
+        'user_id': loan['user_id'],
+        'amount': float(amount),
+        'payment_date': datetime.utcnow().isoformat()
+    }).execute()
+    # Update the loan
     res = supabase_client.supabase.table('loans').update(update).eq('id', loan_id).execute()
     row = res.data[0]
     return LoanActionResponse(id=row['id'], status=row['status'], amount=Decimal(str(row['amount'])), remaining_balance=Decimal(str(row['remaining_balance'])), weekly_payment=Decimal(str(row['weekly_payment'])) if row.get('weekly_payment') is not None else None)
+
+@router.get("/{loan_id}/payments")
+def list_payments(loan_id: str, user: UserContext = Depends(get_current_user)):
+    loan = _fetch_loan(loan_id)
+    if user.role != 'admin' and loan['user_id'] != user.id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    res = supabase_client.supabase.table('loan_payments').select('*').eq('loan_id', loan_id).execute()
+    return res.data

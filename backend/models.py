@@ -34,6 +34,10 @@ class ContributionMarkPaid(BaseModel):
     amount: Decimal = Field(..., ge=0)
     method: str | None = None
 
+class ContributionUpdate(BaseModel):
+    amount: Decimal | None = Field(default=None, ge=0)
+    due_date: date | None = None
+
 class ContributionOut(BaseModel):
     id: str
     user_id: str
@@ -65,3 +69,6 @@ class LoanActionResponse(BaseModel):
     amount: Decimal
     remaining_balance: Decimal | None = None
     weekly_payment: Decimal | None = None
+
+class LoanPayment(BaseModel):
+    amount: Decimal = Field(..., gt=0)
