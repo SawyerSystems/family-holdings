@@ -3,6 +3,9 @@ import { useAuth } from '@/hooks/use-auth';
 import { User } from '@/api/entities';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import ManageUserModal from '@/components/family/ManageUserModal';
+import AddContributionModal from '@/components/family/AddContributionModal';
+import ProcessLoanModal from '@/components/family/ProcessLoanModal';
 import { 
   Users, 
   UserPlus, 
@@ -25,6 +28,11 @@ const FamilyOverviewPage = () => {
   const [familyMembers, setFamilyMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Modal states
+  const [manageUserModal, setManageUserModal] = useState({ isOpen: false, user: null });
+  const [addContributionModal, setAddContributionModal] = useState({ isOpen: false, user: null });
+  const [processLoanModal, setProcessLoanModal] = useState({ isOpen: false, user: null });
   
   // Fetch real family members data
   useEffect(() => {
@@ -103,6 +111,71 @@ const FamilyOverviewPage = () => {
       default:
         return null;
     }
+  };
+  
+  // Modal handlers
+  const handleManageUser = (member) => {
+    setManageUserModal({ isOpen: true, user: member });
+  };
+
+  const handleAddContribution = (member) => {
+    setAddContributionModal({ isOpen: true, user: member });
+  };
+
+  const handleProcessLoan = (member) => {
+    setProcessLoanModal({ isOpen: true, user: member });
+  };
+
+  const handleUserUpdated = (updatedUser) => {
+    setFamilyMembers(prev => 
+      prev.map(member => 
+        member.id === updatedUser.id 
+          ? { 
+              ...member, 
+              name: updatedUser.full_name,
+              email: updatedUser.email,
+              role: updatedUser.role,
+              weeklyContribution: updatedUser.weekly_contribution,
+              borrowingLimit: updatedUser.borrowing_limit
+            }
+          : member
+      )
+    );
+  };
+
+  const handleContributionAdded = (newContribution) => {
+    // Refresh family members to get updated totals
+    const fetchFamilyMembers = async () => {
+      try {
+        const data = await User.getAll();
+        if (Array.isArray(data)) {
+          const members = data.map(member => ({
+            id: member.id,
+            name: member.full_name || member.name || 'Unknown',
+            email: member.email || `${member.id}@familyholdings.local`,
+            role: member.role,
+            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(member.full_name || 'Unknown')}&background=${member.role === 'admin' ? 'dc2626' : '6d28d9'}&color=fff`,
+            totalContributed: parseFloat(member.total_contributed || 0),
+            activeLoans: parseFloat(member.current_loan_balance || 0),
+            borrowingLimit: parseFloat(member.borrowing_limit || 0),
+            weeklyContribution: parseFloat(member.weekly_contribution || 0),
+            contributionStatus: 'current',
+            joinDate: member.joined_at ? new Date(member.joined_at).toLocaleDateString() : new Date().toLocaleDateString(),
+            lastContribution: new Date().toLocaleDateString()
+          }));
+          setFamilyMembers(members);
+        }
+      } catch (err) {
+        console.error('Error refreshing family members:', err);
+      }
+    };
+    
+    fetchFamilyMembers();
+  };
+
+  const handleLoanProcessed = (updatedLoan) => {
+    // Refresh family members to get updated loan balances
+    handleContributionAdded(); // Reuses the refresh logic
   };
   
   const toggleMemberExpanded = (memberId) => {
@@ -368,7 +441,7 @@ const FamilyOverviewPage = () => {
                         variant="outline" 
                         size="sm"
                         className="flex items-center"
-                        onClick={() => console.log('View profile', member.id)}
+                        onClick={() => handleManageUser(member)}
                       >
                         <UserCog className="w-4 h-4 mr-2" />
                         Manage
@@ -378,7 +451,7 @@ const FamilyOverviewPage = () => {
                         variant="outline" 
                         size="sm"
                         className="flex items-center"
-                        onClick={() => console.log('Add contribution', member.id)}
+                        onClick={() => handleAddContribution(member)}
                       >
                         <Wallet className="w-4 h-4 mr-2" />
                         Add Contribution
@@ -388,7 +461,7 @@ const FamilyOverviewPage = () => {
                         variant="outline" 
                         size="sm"
                         className="flex items-center"
-                        onClick={() => console.log('Approve loan', member.id)}
+                        onClick={() => handleProcessLoan(member)}
                       >
                         <CreditCard className="w-4 h-4 mr-2" />
                         Process Loan
@@ -403,6 +476,28 @@ const FamilyOverviewPage = () => {
       </Card>
         </>
       )}
+      
+      {/* Modals */}
+      <ManageUserModal
+        isOpen={manageUserModal.isOpen}
+        onClose={() => setManageUserModal({ isOpen: false, user: null })}
+        user={manageUserModal.user}
+        onUserUpdated={handleUserUpdated}
+      />
+      
+      <AddContributionModal
+        isOpen={addContributionModal.isOpen}
+        onClose={() => setAddContributionModal({ isOpen: false, user: null })}
+        user={addContributionModal.user}
+        onContributionAdded={handleContributionAdded}
+      />
+      
+      <ProcessLoanModal
+        isOpen={processLoanModal.isOpen}
+        onClose={() => setProcessLoanModal({ isOpen: false, user: null })}
+        user={processLoanModal.user}
+        onLoanProcessed={handleLoanProcessed}
+      />
     </div>
   );
 };
