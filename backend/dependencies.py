@@ -15,7 +15,11 @@ def is_valid_uuid(uuid_string):
 class UserContext:
     def __init__(self, id: str, role: str, email: str | None = None):
         self.id = id
-        self.role = role
+        # Normalize role values - map 'user' to 'member' for consistency
+        if role == 'user':
+            self.role = 'member'
+        else:
+            self.role = role
         self.email = email or "mock@example.com"
 
 def get_current_user(x_user_id: str | None = Header(default=None), x_user_role: str | None = Header(default=None)) -> UserContext:
@@ -41,6 +45,7 @@ def get_current_user(x_user_id: str | None = Header(default=None), x_user_role: 
     return UserContext(id=x_user_id, role=x_user_role or "member")
 
 def require_admin(user: UserContext = Depends(get_current_user)) -> UserContext:
-    if user.role != "admin":
+    # Check for both 'admin' role and handle any role inconsistencies
+    if user.role not in ["admin"]:
         raise HTTPException(status_code=403, detail="Admin privileges required")
     return user

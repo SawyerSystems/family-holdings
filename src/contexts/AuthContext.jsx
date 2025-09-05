@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { apiClient } from '@/api/api-client';
+import { validateCredentials, isAdmin, getUserFeatures } from '@/utils/auth-helper';
 
 // Import API client (we'll implement this later)
 // import { supabase } from '@/api/supabaseClient';
@@ -109,51 +110,25 @@ export const AuthProvider = ({ children }) => {
     };
 
     initAuth();
-  }, [isDevelopment]);  // Sign in function - this would use Supabase auth in production
+  }, [isDevelopment]);  // Sign in function - now uses proper credential validation
   const signIn = async ({ email, password }) => {
     try {
       setLoading(true);
       
-      if (isDevelopment) {
-        // Mock successful sign-in
-        const mockUser = {
-          id: 'dev-user-123',
-          email,
-          name: 'Development User',
-          role: 'admin',
-          avatar: 'https://ui-avatars.com/api/?name=Dev+User&background=6d28d9&color=fff',
-        };
-        
-        setUser(mockUser);
-        localStorage.setItem('auth.user', JSON.stringify(mockUser));
-        localStorage.removeItem('auth.signedOut'); // Clear signed out flag
-        setHasSignedOut(false);
-        return { success: true, user: mockUser };
-      } else {
-        // In production:
-        // const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        // if (error) throw error;
-        // const { data: userData } = await supabase.from('profiles').select('*').eq('id', data.user.id).single();
-        // setUser({ ...data.user, ...userData });
-        // return { success: true, user: { ...data.user, ...userData } };
-        
-        // Mock for now:
-        if (email === 'admin@example.com' && password === 'password') {
-          const mockUser = {
-            id: 'real-user-123',
-            email,
-            name: 'Real User',
-            role: 'admin',
-            avatar: 'https://ui-avatars.com/api/?name=Real+User&background=6d28d9&color=fff',
-          };
-          
-          setUser(mockUser);
-          localStorage.setItem('auth.user', JSON.stringify(mockUser));
-          return { success: true, user: mockUser };
-        } else {
-          throw new Error('Invalid login credentials');
-        }
+      // Use the auth helper to validate credentials
+      const result = await validateCredentials(email, password);
+      
+      if (!result.success) {
+        return { success: false, error: result.error };
       }
+      
+      // Set the authenticated user
+      setUser(result.user);
+      localStorage.setItem('auth.user', JSON.stringify(result.user));
+      localStorage.removeItem('auth.signedOut'); // Clear signed out flag
+      setHasSignedOut(false);
+      
+      return { success: true, user: result.user };
     } catch (error) {
       console.error('Sign in error:', error);
       return { success: false, error: error.message };

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import ManageUserModal from '@/components/family/ManageUserModal';
 import AddContributionModal from '@/components/family/AddContributionModal';
 import ProcessLoanModal from '@/components/family/ProcessLoanModal';
+import { isAdmin, canAccessAdminFeatures, canManageUsers } from '@/utils/auth-helper';
 import { 
   Users, 
   UserPlus, 
@@ -33,6 +34,10 @@ const FamilyOverviewPage = () => {
   const [manageUserModal, setManageUserModal] = useState({ isOpen: false, user: null });
   const [addContributionModal, setAddContributionModal] = useState({ isOpen: false, user: null });
   const [processLoanModal, setProcessLoanModal] = useState({ isOpen: false, user: null });
+  
+  // Check if user has admin privileges
+  const userIsAdmin = isAdmin(user);
+  const canManage = canManageUsers(user);
   
   // Fetch real family members data
   useEffect(() => {
@@ -186,6 +191,23 @@ const FamilyOverviewPage = () => {
     }
   };
   
+  // If user is not admin, show access denied message
+  if (!userIsAdmin) {
+    return (
+      <div className="px-4 py-8">
+        <div className="text-center py-20">
+          <h1 className="text-2xl font-bold text-white mb-4">Admin Access Required</h1>
+          <p className="text-white/70 mb-6">
+            You need admin privileges to access the family overview and management features.
+          </p>
+          <p className="text-white/50 text-sm">
+            Current user: {user?.name || 'Unknown'} ({user?.role || 'No role'})
+          </p>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <div className="px-4 py-8">
       {loading && (
@@ -204,24 +226,26 @@ const FamilyOverviewPage = () => {
         <>
           <div className="flex flex-col mb-8 md:flex-row md:items-center md:justify-between">
             <h1 className="text-3xl font-bold text-white">Family Overview</h1>
-            <Button 
-              variant={showCreateMember ? "outline" : "secondary"}
-              className="mt-4 md:mt-0"
-              onClick={() => setShowCreateMember(!showCreateMember)}
-            >
-              {showCreateMember ? (
-                <>Cancel</>
-              ) : (
-                <>
-                  <UserPlus className="w-4 h-4 mr-2" />
-                  Add Family Member
-                </>
-              )}
-            </Button>
+            {canManage && (
+              <Button 
+                variant={showCreateMember ? "outline" : "secondary"}
+                className="mt-4 md:mt-0"
+                onClick={() => setShowCreateMember(!showCreateMember)}
+              >
+                {showCreateMember ? (
+                  <>Cancel</>
+                ) : (
+                  <>
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Add Family Member
+                  </>
+                )}
+              </Button>
+            )}
           </div>
           
-          {/* Add New Member Form */}
-          {showCreateMember && (
+          {/* Add New Member Form - Only for admins */}
+          {showCreateMember && canManage && (
         <Card className="mb-8 border-0 shadow-md bg-white/5 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="text-xl font-semibold text-white">Add New Family Member</CardTitle>
@@ -436,37 +460,39 @@ const FamilyOverviewPage = () => {
                       </div>
                     </div>
                     
-                    <div className="flex flex-wrap gap-2 mt-4">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="flex items-center"
-                        onClick={() => handleManageUser(member)}
-                      >
-                        <UserCog className="w-4 h-4 mr-2" />
-                        Manage
-                      </Button>
-                      
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="flex items-center"
-                        onClick={() => handleAddContribution(member)}
-                      >
-                        <Wallet className="w-4 h-4 mr-2" />
-                        Add Contribution
-                      </Button>
-                      
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        className="flex items-center"
-                        onClick={() => handleProcessLoan(member)}
-                      >
-                        <CreditCard className="w-4 h-4 mr-2" />
-                        Process Loan
-                      </Button>
-                    </div>
+                    {canManage && (
+                      <div className="flex flex-wrap gap-2 mt-4">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="flex items-center"
+                          onClick={() => handleManageUser(member)}
+                        >
+                          <UserCog className="w-4 h-4 mr-2" />
+                          Manage
+                        </Button>
+                        
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="flex items-center"
+                          onClick={() => handleAddContribution(member)}
+                        >
+                          <Wallet className="w-4 h-4 mr-2" />
+                          Add Contribution
+                        </Button>
+                        
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="flex items-center"
+                          onClick={() => handleProcessLoan(member)}
+                        >
+                          <CreditCard className="w-4 h-4 mr-2" />
+                          Process Loan
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

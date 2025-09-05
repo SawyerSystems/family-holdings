@@ -18,6 +18,7 @@ import { useAuth } from '../hooks/use-auth'
 import { apiClient } from '../api/api-client'
 import LoadingScreen from '../components/loading-screen'
 import PropTypes from 'prop-types'
+import { isAdmin, canAccessAdminFeatures, getUserFeatures } from '../utils/auth-helper'
 
 export default function MainLayout({ children }) {
   const location = useLocation()
@@ -123,8 +124,9 @@ export default function MainLayout({ children }) {
     sessionStorage.setItem('viewAs', newView)
   }
 
-  const isAdmin = user?.role === "admin" // Check if the user's actual role is admin
-  const isAdminView = isAdmin && viewAs === 'admin' // Check if user is admin AND currently viewing as admin
+  const userIsAdmin = isAdmin(user) // Check if the user's actual role is admin
+  const isAdminView = userIsAdmin && viewAs === 'admin' // Check if user is admin AND currently viewing as admin
+  const userFeatures = getUserFeatures(user) // Get available features for user
 
   const navigationItems = [
     {
@@ -149,13 +151,13 @@ export default function MainLayout({ children }) {
       title: "Family Overview",
       url: "/family-overview",
       icon: Users,
-      showWhen: ["admin"],
+      showWhen: userIsAdmin ? ["admin"] : [], // Only show to admins
     },
     {
       title: "Bank Overview",
       url: "/bank-overview",
       icon: Landmark,
-      showWhen: ["admin"],
+      showWhen: userIsAdmin ? ["admin"] : [], // Only show to admins
     },
     {
       title: "Settings",
@@ -208,7 +210,7 @@ export default function MainLayout({ children }) {
                       </Link>
                     ))}
                     
-                    {isAdmin && (
+                    {userIsAdmin && (
                       <button
                         onClick={() => {
                           handleViewSwitch()
@@ -257,7 +259,7 @@ export default function MainLayout({ children }) {
                   </div>
                   
                   <div className="p-4 border-t border-primary-600 space-y-2">
-                    {isAdmin && (
+                    {userIsAdmin && (
                       <button
                         onClick={handleViewSwitch}
                         className="flex items-center w-full p-3 rounded-lg hover:bg-primary-600"
