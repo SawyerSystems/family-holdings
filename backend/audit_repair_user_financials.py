@@ -19,12 +19,16 @@ from collections import defaultdict
 import datetime
 import supabase_client
 
+if not hasattr(supabase_client, 'supabase'):
+    raise RuntimeError('Supabase client failed to initialize (missing credentials or version mismatch).')
+supabase = getattr(supabase_client, 'supabase')
+
 CONTRIB_STATUS_TARGET = 'completed'  # matches enum
 
 # Pull data
-profiles = supabase_client.supabase.table('profiles').select('*').execute().data or []
-contribs = supabase_client.supabase.table('contributions').select('user_id, amount, status, period_year, period_week').execute().data or []
-loans = supabase_client.supabase.table('loans').select('user_id, remaining_balance, status').eq('status','approved').execute().data or []
+profiles = supabase.table('profiles').select('*').execute().data or []
+contribs = supabase.table('contributions').select('user_id, amount, status, period_year, period_week').execute().data or []
+loans = supabase.table('loans').select('user_id, remaining_balance, status').eq('status','approved').execute().data or []
 
 paid_sum = defaultdict(lambda: Decimal('0.00'))
 for c in contribs:

@@ -5,13 +5,18 @@ class ApiClient {
   constructor() {
     this.baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
     this.token = null
+    this.getCurrentUser = null // Will be set by AuthContext
   }
 
   setAuthToken(token) {
     this.token = token
   }
 
-  getAuthHeaders() {
+  setCurrentUserGetter(getCurrentUserFn) {
+    this.getCurrentUser = getCurrentUserFn
+  }
+
+  getAuthHeaders(user = null) {
     const headers = {
       'Content-Type': 'application/json'
     }
@@ -22,20 +27,27 @@ class ApiClient {
 
     // Mock auth for development (Phase 1)
     if (import.meta.env.DEV) {
-      // Use Family Admin ID for now - you can make this configurable later
-      headers['x-user-id'] = '5e98e9eb-375b-49f6-82bc-904df30c4021'
-      headers['x-user-role'] = 'admin'
+      // Use provided user, or get current user, or default to Family Admin
+      const currentUser = user || (this.getCurrentUser ? this.getCurrentUser() : null) || {
+        id: '5e98e9eb-375b-49f6-82bc-904df30c4021',
+        role: 'admin',
+        email: 'admin@familyholdings.local'
+      }
+      
+      headers['x-user-id'] = currentUser.id
+      headers['x-user-role'] = currentUser.role
+      headers['x-user-email'] = currentUser.email
     }
 
     return headers
   }
 
-  async request(endpoint, method = 'GET', data = null) {
+  async request(endpoint, method = 'GET', data = null, user = null) {
     const url = `${this.baseUrl}${endpoint}`
     
     const options = {
       method,
-      headers: this.getAuthHeaders(),
+      headers: this.getAuthHeaders(user),
       credentials: 'include'
     }
 

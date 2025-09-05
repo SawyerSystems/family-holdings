@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reset Auth State</title>
+</head>
+<body>
+    <h1>Reset Auth State</h1>
+    <button onclick="resetAuth()">Reset Authentication</button>
+    <div id="output"></div>
+    
+    <script>
+        function resetAuth() {
+            const output = document.getElementById('output');
+            
+            // Clear all auth-related localStorage items
+            const itemsToRemove = [
+                'auth.user',
+                'auth.signedOut', 
+                'user-switcher.selectedUserId'
+            ];
+            
+            itemsToRemove.forEach(item => {
+                localStorage.removeItem(item);
+                output.innerHTML += '<p>Removed: ' + item + '</p>';
+            });
+            
+            // Set the correct Family Admin user
+            const familyAdminUser = {
+                id: '5e98e9eb-375b-49f6-82bc-904df30c4021',
+                email: 'admin@familyholdings.local', 
+                name: 'Family Admin',
+                role: 'admin',
+                avatar: 'https://ui-avatars.com/api/?name=Family+Admin&background=dc2626&color=fff',
+            };
+            
+            localStorage.setItem('auth.user', JSON.stringify(familyAdminUser));
+            output.innerHTML += '<p>Set Family Admin user with ID: ' + familyAdminUser.id + '</p>';
+            output.innerHTML += '<p><strong>Auth state reset complete!</strong></p>';
+            output.innerHTML += '<p>Now reload your main application.</p>';
+        }
+    </script>
+</body>
+</html>

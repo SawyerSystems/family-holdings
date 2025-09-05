@@ -22,18 +22,20 @@ if not supabase_url or not supabase_key:
 
 # Initialize Supabase client
 try:
+    # Try without options first for supabase v2.x compatibility
     supabase: Client = create_client(supabase_url, supabase_key)
     print("Supabase client initialized successfully")
 except Exception as e:
     print(f"Error initializing Supabase client: {e}")
+    supabase = None  # Set to None so we can check for it
     # We don't want to raise an exception here as it would prevent the app from starting
     # Instead, we'll handle the error when the client is used
 
 def test_connection():
     """Test the Supabase connection and return the result."""
     try:
-        # Simple query to check connectivity
-        response = supabase.table('_schema').select('version').limit(1).execute()
+        # Simple query to check connectivity - try profiles table which should exist
+        response = supabase.table('profiles').select('id').limit(1).execute()
         return {
             "success": True,
             "message": "Successfully connected to Supabase",

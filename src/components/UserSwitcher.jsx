@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronDown, Users } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
+import { User } from '@/api/entities';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,49 +10,44 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-const AVAILABLE_USERS = [
-  {
-    id: '5e98e9eb-375b-49f6-82bc-904df30c4021',
-    email: 'admin@familyholdings.local',
-    name: 'Family Admin',
-    role: 'admin',
-    avatar: 'https://ui-avatars.com/api/?name=Family+Admin&background=dc2626&color=fff',
-    description: 'Administrator'
-  },
-  {
-    id: '6813d815-53cc-4d08-8bf5-8df09e8a7650',
-    email: 'john@familyholdings.local',
-    name: 'John Smith',
-    role: 'member',
-    avatar: 'https://ui-avatars.com/api/?name=John+Smith&background=2563eb&color=fff',
-    description: 'Weekly: $75, Total: $1500'
-  },
-  {
-    id: 'a00a1129-eabe-4e82-afa4-0a6136313cd2',
-    email: 'jane@familyholdings.local',
-    name: 'Jane Smith',
-    role: 'member',
-    avatar: 'https://ui-avatars.com/api/?name=Jane+Smith&background=7c3aed&color=fff',
-    description: 'Weekly: $50, Total: $1000'
-  },
-  {
-    id: '0155517a-6406-4cea-9425-990e32820803',
-    email: 'bob@familyholdings.local',
-    name: 'Bob Johnson',
-    role: 'member',
-    avatar: 'https://ui-avatars.com/api/?name=Bob+Johnson&background=059669&color=fff',
-    description: 'Weekly: $100, Total: $2000'
-  }
-];
-
 const UserSwitcher = () => {
   const { user, switchUser } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const [availableUsers, setAvailableUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Only show in development mode
-  if (!import.meta.env.DEV) {
-    return null;
-  }
+  // Fetch real user data when component mounts
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const users = await User.getAll();
+        const usersWithDescriptions = users.map(u => ({
+          id: u.id,
+          email: u.email || `${u.full_name.toLowerCase().replace(' ', '.')}@familyholdings.local`,
+          name: u.full_name,
+          role: u.role,
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(u.full_name)}&background=${u.role === 'admin' ? 'dc2626' : '2563eb'}&color=fff`,
+          description: u.role === 'admin' ? 'Administrator' : `Weekly: $${u.weekly_contribution || 0}, Total: $${u.total_contributed || 0}`
+        }));
+        setAvailableUsers(usersWithDescriptions);
+      } catch (error) {
+        console.error('Failed to load users:', error);
+        // Fallback to basic user info if API fails
+        setAvailableUsers([{
+          id: user?.id,
+          name: user?.full_name || 'Current User',
+          email: user?.email || 'user@familyholdings.local',
+          role: user?.role || 'member',
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.full_name || 'User')}&background=2563eb&color=fff`,
+          description: 'Current User'
+        }]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUsers();
+  }, [user]);
 
   const handleUserSwitch = async (selectedUser) => {
     if (selectedUser.id === user?.id) {
@@ -59,8 +55,8 @@ const UserSwitcher = () => {
     }
     
     try {
-  // Persist selected user id immediately so AuthContext init can pick it up
-  localStorage.setItem('user-switcher.selectedUserId', selectedUser.id);
+      // Persist selected user id immediately so AuthContext init can pick it up
+      localStorage.setItem('user-switcher.selectedUserId', selectedUser.id);
       await switchUser(selectedUser);
       setIsOpen(false);
       
@@ -76,7 +72,16 @@ const UserSwitcher = () => {
     }
   };
 
-  const currentUser = AVAILABLE_USERS.find(u => u.id === user?.id) || AVAILABLE_USERS[0];
+  const currentUser = availableUsers.find(u => u.id === user?.id) || availableUsers[0];
+
+  // Only show in development mode
+  if (!import.meta.env.DEV) {
+    return null;
+  }
+
+  if (loading || availableUsers.length === 0) {
+    return null;
+  }
 
   return (
     <div className="relative">
@@ -102,7 +107,7 @@ const UserSwitcher = () => {
             <div className="text-sm font-medium text-white">Switch User (Dev Mode)</div>
             <div className="text-xs text-white/60">For testing different user roles</div>
           </div>
-          {AVAILABLE_USERS.map((testUser) => (
+          {availableUsers.map((testUser) => (
             <DropdownMenuItem
               key={testUser.id}
               onClick={() => handleUserSwitch(testUser)}

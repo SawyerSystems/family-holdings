@@ -4,7 +4,7 @@ import MainLayout from '@/layouts/MainLayout'
 import LoginPage from '@/pages/LoginPage'
 import DashboardPage from '@/pages/DashboardPage'
 import ContributionsPage from '@/pages/ContributionsPage'
-import LoansPage from '@/pages/LoansPage'
+import Loans from '@/pages/loans' // Use the real API-connected loans page
 import FamilyOverviewPage from '@/pages/FamilyOverviewPage'
 import SettingsPage from '@/pages/SettingsPage'
 import DiagnosticComponent from '@/components/DiagnosticComponent'
@@ -29,7 +29,7 @@ function App() {
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="contributions" element={<ContributionsPage />} />
-            <Route path="loans" element={<LoansPage />} />
+            <Route path="loans" element={<Loans />} />
             <Route path="family-overview" element={<FamilyOverviewPage />} />
             <Route path="bank-overview" element={<Navigate to="/dashboard" replace />} />
             <Route path="settings" element={<SettingsPage />} />
